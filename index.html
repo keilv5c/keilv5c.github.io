@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-R-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>两个有序链表的合并 - 交互式学习</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Inter字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* 自定义样式 */
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background-color: #f4f7f6; /* 柔和的背景色 */
+        }
+        
+        /* 链表节点样式 */
+        .node {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            border: 2px solid;
+            border-radius: 0.5rem; /* rounded-lg */
+            font-weight: 600; /* font-semibold */
+            font-size: 1.125rem; /* text-lg */
+            margin: 0 4px;
+            transition: all 0.5s ease;
+            position: relative;
+            flex-shrink: 0; /* 防止节点在flex布局中被压缩 */
+        }
+        
+        /* 链表节点数据 */
+        .node-data {
+            border-right: 2px solid;
+            width: 70%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-top-left-radius: 0.375rem; /* rounded-l-md */
+            border-bottom-left-radius: 0.375rem; /* rounded-l-md */
+        }
+        
+        /* 链表节点指针 */
+        .node-next {
+            width: 30%;
+            height: 100%;
+            background-color: #f0f0f0; /* bg-gray-100 */
+            border-top-right-radius: 0.375rem; /* rounded-r-md */
+            border-bottom-right-radius: 0.375rem; /* rounded-r-md */
+        }
+
+        /* 链表之间的箭头 */
+        .arrow {
+            position: relative;
+            margin: 0 8px;
+            width: 30px;
+            height: 2px;
+            background-color: #333;
+            flex-shrink: 0; /* 防止箭头被压缩 */
+        }
+        .arrow::after {
+            content: '';
+            position: absolute;
+            right: -2px;
+            top: -4px;
+            width: 0;
+            height: 0;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+            border-left: 7px solid #333;
+        }
+        
+        /* 动画中的指针 */
+        .pointer {
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 15px solid;
+            transition: transform 0.5s ease, opacity 0.5s ease;
+            position: absolute;
+            bottom: -25px; /* 节点下方 */
+            left: calc(50% - 10px);
+        }
+
+        /* 选项卡按钮 */
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            margin-bottom: 0.5rem; /* 为换行按钮增加间距 */
+        }
+        .tab-btn.active {
+            background-color: #4f46e5; /* bg-indigo-600 */
+            color: white;
+        }
+        .tab-btn:not(.active) {
+            background-color: white;
+            color: #374151; /* text-gray-700 */
+            border-color: #e5e7eb; /* border-gray-200 */
+        }
+        .tab-btn:not(.active):hover {
+            background-color: #f9fafb; /* bg-gray-50 */
+        }
+        
+        /* 选项卡内容 */
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* 动画中的节点移动 */
+        .node-move {
+            transition: transform 0.8s ease, opacity 0.8s ease;
+        }
+        
+        /* 动画状态文本 */
+        #animStatus {
+            min-height: 5rem;
+            background-color: #f3f4f6;
+            border-left: 4px solid #4f46e5;
+        }
+
+        /* 动画链表容器样式 */
+        .anim-list-container {
+            display: flex;
+            align-items: center;
+            min-height: 80px;
+            padding: 1rem;
+            position: relative;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden">
+        
+        <!-- 标题 -->
+        <header class="bg-gradient-to-r from-indigo-600 to-purple-700 p-6 shadow-md">
+            <h1 class="text-3xl md:text-4xl font-bold text-white text-center">
+                两个有序链表的合并 (非递增)
+            </h1>
+            <p class="text-center text-indigo-100 text-lg mt-2">
+                交互式学习：从非递增链表到非递增链表
+            </p>
+        </header>
+
+        <main class="p-4 md:p-8">
+            
+            <!-- 选项卡导航 -->
+            <!-- 修复：添加 flex-wrap 允许按钮在小屏幕上换行 -->
+            <nav class="flex flex-wrap justify-center space-x-2 md:space-x-4 mb-8">
+                <button class="tab-btn active" onclick="showTab('content')">内容讲解</button>
+                <button class="tab-btn" onclick="showTab('simulation')">交互模拟</button>
+                <button class="tab-btn" onclick="showTab('animation')">动画演示</button>
+            </nav>
+
+            <!-- 1. 内容讲解 -->
+            <section id="contentTab" class="tab-content active space-y-6 leading-relaxed text-gray-800">
+                
+                <!-- 
+                    修复：
+                    - 增加了 overflow-x-auto 以便在小屏幕上可以横向滚动思维导图
+                -->
+                <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm overflow-x-auto">
+                    <h2 class="text-2xl font-bold text-indigo-700 mb-6 border-b-2 border-indigo-200 pb-2">算法思维导图 (双指针 + 尾插法)</h2>
+                    <!-- 修复：增加了 min-w-[600px] 确保导图有最小宽度以触发滚动 -->
+                    <div class="space-y-4 text-center text-sm md:text-base relative min-w-[600px]">
+                        <!-- 1. 开始 -->
+                        <div class="p-3 bg-green-100 border border-green-300 rounded-lg shadow-sm inline-block"><strong>开始</strong></div>
+                        <div class="flex justify-center"><div class="w-0.5 h-6 bg-gray-400"></div></div>
+                        
+                        <!-- 2. 初始化 -->
+                        <div class="p-3 bg-blue-100 border border-blue-300 rounded-lg shadow-sm inline-block max-w-md">
+                            <strong class="text-blue-800">初始化:</strong><br>
+                            1. 创建新链表 <code>lc</code> (带头结点)<br>
+                            2. 尾指针 <code>r = lc.head</code><br>
+                            3. 指针 <code>p = la.head.next</code><br>
+                            4. 指针 <code>q = lb.head.next</code>
+                        </div>
+                        <div class="flex justify-center"><div class="w-0.5 h-6 bg-gray-400"></div></div>
+
+                        <!-- 3. 循环条件 -->
+                        <div class="p-3 bg-yellow-100 border border-yellow-400 rounded-lg shadow-sm inline-block">
+                            <strong class="text-yellow-800">循环:</strong> <code>while (p != null && q != null)</code>
+                        </div>
+                        
+                        <!-- 4. 循环体 -->
+                        <div class="relative max-w-lg mx-auto">
+                            <!-- "是" 箭头 (向下) -->
+                            <div class="flex justify-center">
+                                <div class="w-0.5 h-6 bg-gray-400 relative">
+                                    <span class="absolute -left-10 top-0 text-sm font-semibold">是</span>
+                                </div>
+                            </div>
+
+                            <!-- "否" 箭头 (向右) -->
+                            <div class="absolute top-4 left-full ml-2">
+                                <div class="w-16 h-0.5 bg-gray-400 relative">
+                                     <span class="absolute -left-10 top-[-10px] text-sm font-semibold">否</span>
+                                </div>
+                                <div class="w-0.5 h-48 bg-gray-400 absolute left-16 top-0"></div>
+                            </div>
+
+                            <!-- 比较框 -->
+                            <div class="p-4 bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
+                                <div class="p-3 bg-yellow-100 border border-yellow-400 rounded-lg shadow-sm inline-block">
+                                    <strong class="text-yellow-800">比较:</strong> <code>p.data >= q.data</code> ?
+                                </div>
+                                <div class="flex justify-around mt-4">
+                                    <!-- 分支: 是 -->
+                                    <div class="w-1/2 px-2">
+                                        <div class="text-sm font-bold text-green-600 mb-2">是 (>=)</div>
+                                        <div class="p-3 bg-green-50 border border-green-300 rounded-lg">
+                                            将 <code>p</code> 接入 <code>lc</code>:<br>
+                                            <code>r.next = p</code><br>
+                                            <code>r = p</code><br>
+                                            <code>p = p.next</code>
+                                        </div>
+                                    </div>
+                                    <!-- 分支: 否 -->
+                                    <div class="w-1/2 px-2">
+                                        <div class="text-sm font-bold text-red-600 mb-2">否 (<)</div>
+                                        <div class="p-3 bg-red-50 border border-red-300 rounded-lg">
+                                            将 <code>q</code> 接入 <code>lc</code>:<br>
+                                            <code>r.next = q</code><br>
+                                            <code>r = q</code><br>
+                                            <code>q = q.next</code>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- 汇合线 -->
+                                <div class="flex justify-center mt-4">
+                                    <div class="w-1/2 h-0.5 bg-gray-400 relative -mr-px"></div>
+                                    <div class="w-1/2 h-0.5 bg-gray-400 relative -ml-px"></div>
+                                </div>
+                                <div class="flex justify-center">
+                                     <div class="w-0.5 h-6 bg-gray-400 relative">
+                                        <span class="absolute -left-20 top-0 text-sm font-semibold whitespace-nowrap">返回循环顶部</span>
+                                     </div>
+                                </div>
+                            </div>
+                        </div> <!-- 结束 relative 容器 -->
+                        
+                        <!-- 5. 循环结束 (移到右侧) -->
+                        <!-- 占位符，让否分支有空间 -->
+                        <div class="relative w-full" style="height: 200px;"> 
+                            <div class="absolute left-1/2 ml-32 top-8"> <!-- 调整 ml- 和 top- -->
+                                <div class="p-3 bg-blue-100 border border-blue-300 rounded-lg shadow-sm inline-block max-w-md">
+                                    <strong class="text-blue-800">处理剩余节点:</strong><br>
+                                    <code>if (p != null) r.next = p;</code><br>
+                                    <code>if (q != null) r.next = q;</code>
+                                </div>
+                                <div class="flex justify-center">
+                                    <div class="w-0.5 h-6 bg-gray-400"></div>
+                                </div>
+                                <div class="p-3 bg-green-100 border border-green-300 rounded-lg shadow-sm inline-block">
+                                    <strong>结束 (返回 lc)</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 移除了 style="margin-top: -80px;" -->
+                <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <h2 class="text-2xl font-bold text-indigo-700 mb-4 border-b-2 border-indigo-200 pb-2">1. 问题描述</h2>
+                    <p class="mb-3 font-medium">设计并实现一个链表合并函数，需完成以下核心任务：</p>
+                    <ul class="list-disc list-inside space-y-2 pl-4">
+                        <li>接收两个已按 <strong class="text-indigo-600">非递增顺序(Descending)</strong> 排序的单链表 <code>la</code> 和 <code>lb</code>。</li>
+                        <li>合并两个链表的所有节点，生成一个新的 <strong class="text-indigo-600">非递增顺序</strong> 有序链表 <code>lc</code>。</li>
+                        <li><strong>注意：</strong> 文档中的Python代码实现与此描述略有出入。代码实际接收两个 <strong class="text-red-600">非递减(Ascending)</strong> 链表，并通过 <strong class="text-red-600">“头插法”</strong> 将它们合并为一个 <strong class="text-indigo-600">非递增(Descending)</strong> 链表。</li>
+                        <li>本页的“交互模拟”和“动画演示”将遵循文档 <strong class="text-indigo-600">原始要求</strong>：即 <strong class="text-indigo-600">非递增 + 非递增 → 非递增</strong>，使用“双指针 + 尾插法”实现，这更符合直觉。</li>
+                    </ul>
+                </div>
+
+                <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <h2 class="text-2xl font-bold text-indigo-700 mb-4 border-b-2 border-indigo-200 pb-2">2. 解决方案分析</h2>
+                    <h3 class="text-xl font-semibold text-gray-700 mt-4 mb-2">方案一：先合并数据再排序</h3>
+                    <ul class="list-disc list-inside pl-4 space-y-1">
+                        <li><strong>思路：</strong> 遍历 <code>la</code> 和 <code>lb</code>，将所有数据存入一个列表，对列表排序，再创建新链表 <code>lc</code>。</li>
+                        <li><strong>优点：</strong> 逻辑简单。</li>
+                        <li><strong>缺点：</strong> 时间复杂度高 O((n+m)log(n+m))，空间复杂度高 O(n+m)。</li>
+                    </ul>
+
+                    <h3 class="text-xl font-semibold text-gray-700 mt-4 mb-2">方案二：双指针遍历直接合并 (最终选择)</h3>
+                    <ul class="list-disc list-inside pl-4 space-y-1">
+                        <li><strong>思路：</strong> 定义指针 <code>p</code> 指向 <code>la</code>，<code>q</code> 指向 <code>lb</code>。比较 <code>p</code> 和 <code>q</code> 指向节点的数据大小，将 <strong class="text-indigo-600">较大数据</strong> 的节点接入新链表 <code>lc</code> (使用尾插法)，并移动对应指针。重复此过程，最后将未遍历完的链表剩余节点全部接入 <code>lc</code>。</li>
+                        <li><strong>优点：</strong> 时间复杂度 O(n+m)，效率最优。空间复杂度 O(1) (若不计新链表空间)。</li>
+                        <li><strong>缺点：</strong> 逻辑稍复杂，需处理指针移动和边界情况。</li>
+                    </ul>
+                    
+                    <h3 class="text-xl font-semibold text-gray-700 mt-4 mb-2">方案三：递归合并</h3>
+                    <ul class="list-disc list-inside pl-4 space-y-1">
+                        <li><strong>思路：</strong> 递归比较 <code>la</code> 和 <code>lb</code> 的当前节点，选择较大节点作为 <code>lc</code> 的当前节点，递归处理剩余节点。</li>
+                        <li><strong>优点：</strong> 代码简洁。</li>
+                        <li><strong>缺点：</strong> 递归深度可能导致“栈溢出”，函数调用开销大。</li>
+                    </ul>
+                </div>
+                
+                <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <h2 class="text-2xl font-bold text-indigo-700 mb-4 border-b-2 border-indigo-200 pb-2">3. 算法步骤 (方案二：双指针 + 尾插法)</h2>
+                    <ol class="list-decimal list-inside space-y-3 pl-4">
+                        <li><strong>初始化：</strong>
+                            <ul class="list-circle list-inside pl-6 mt-1">
+                                <li>创建新链表 <code>lc</code> (带头结点)，定义尾指针 <code>r</code> 指向 <code>lc</code> 的头结点。</li>
+                                <li>定义指针 <code>p</code> 指向 <code>la</code> 的第一个数据节点。</li>
+                                <li>定义指针 <code>q</code> 指向 <code>lb</code> 的第一个数据节点。</li>
+                            </ul>
+                        </li>
+                        <li><strong>双指针合并：</strong>
+                            <ul class="list-circle list-inside pl-6 mt-1">
+                                <li>当 <code>p</code> 和 <code>q</code> 均不为空时，循环比较：</li>
+                                <li>若 <code>p.data >= q.data</code>，则将 <code>p</code> 指向的节点接入 <code>lc</code> 的末尾 (<code>r.next = p</code>)，移动 <code>r</code> 和 <code>p</code> (<code>r = p</code>, <code>p = p.next</code>)。</li>
+                                <li>否则 (<code>p.data < q.data</code>)，将 <code>q</code> 指向的节点接入 <code>lc</code> 的末尾，移动 <code>r</code> 和 <code>q</code>。</li>
+                            </ul>
+                        </li>
+                        <li><strong>处理剩余节点：</strong>
+                            <ul class="list-circle list-inside pl-6 mt-1">
+                                <li>循环结束后，<code>p</code> 和 <code>q</code> 至少有一个为空。</li>
+                                <li>将非空链表的剩余所有节点 (<code>p</code> 或 <code>q</code>) 直接链接到 <code>r</code> 的后面 (<code>r.next = p</code> 或 <code>r.next = q</code>)。</li>
+                            </ul>
+                        </li>
+                        <li><strong>返回结果：</strong>
+                            <ul class="list-circle list-inside pl-6 mt-1">
+                                <li>返回新链表 <code>lc</code> (的头结点)。(实际使用时返回 <code>lc.head.next</code>)</li>
+                            </ul>
+                        </li>
+                    </ol>
+                </div>
+            </section>
+
+            <!-- 2. 交互模拟 -->
+            <section id="simulationTab" class="tab-content space-y-6">
+                <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <h2 class="text-2xl font-bold text-indigo-700 mb-4">输入 (非递增有序)</h2>
+                    <p class="text-gray-600 mb-4">请输入两个按 <strong class="text-indigo-600">非递增顺序</strong> (例如: 9, 7, 5, 1) 排列的数字列表，以英文逗号分隔。</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="listA_input" class="block text-lg font-semibold text-gray-700 mb-2">链表 A (List A)</label>
+                            <input type="text" id="listA_input" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="例如: 9, 5, 5, 1">
+                        </div>
+                        <div>
+                            <label for="listB_input" class="block text-lg font-semibold text-gray-700 mb-2">链表 B (List B)</label>
+                            <input type="text" id="listB_input" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="例如: 10, 8, 5, 2">
+                        </div>
+                    </div>
+                    <button id="mergeButton" class="mt-6 w-full md:w-auto px-8 py-3 bg-indigo-600 text-white text-lg font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75 transition duration-300">
+                        立即合并
+                    </button>
+                </div>
+                
+                <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm min-h-[150px]">
+                    <h2 class="text-2xl font-bold text-indigo-700 mb-4">合并结果 (非递增)</h2>
+                    <div id="mergeResult" class="text-xl font-medium text-gray-800 bg-gray-50 p-4 rounded-lg overflow-x-auto">
+                        <span class="text-gray-500">等待输入...</span>
+                    </div>
+                    <div id="simError" class="text-red-600 font-semibold mt-2"></div>
+                </div>
+            </section>
+
+            <!-- 3. 动画演示 -->
+            <!-- 修复：为动画容器的父元素添加 overflow-x-auto -->
+            <section id="animationTab" class="tab-content space-y-6">
+                <!-- 控制区 -->
+                <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <h2 class="text-2xl font-bold text-indigo-700 mb-4">演示控制</h2>
+                    <div class="flex flex-wrap gap-4">
+                        <button id="startAnimButton" class="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 transition">开始/重置 (使用模拟器数据)</button>
+                        <button id="nextStepButton" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition" disabled>下一步</button>
+                    </div>
+                </div>
+
+                <!-- 动画区 -->
+                <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm overflow-x-auto">
+                    <h3 class="text-xl font-bold text-gray-700 mb-2">新链表 (lc)</h3>
+                    <!-- 修复：使用 .anim-list-container 样式 -->
+                    <div id="animListLC" class="anim-list-container bg-indigo-50 rounded-lg border-2 border-dashed border-indigo-300">
+                        <span class="text-gray-500">lc (头结点)</span>
+                    </div>
+                    
+                    <hr class="my-6 border-gray-300">
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-700 mb-2">链表 A (la)</h3>
+                            <!-- 修复：使用 .anim-list-container 样式 -->
+                            <div id="animListA" class="anim-list-container">
+                                <!-- 节点将由JS动态插入 -->
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-700 mb-2">链表 B (lb)</h3>
+                            <!-- 修复：使用 .anim-list-container 样式 -->
+                            <div id="animListB" class="anim-list-container">
+                                <!-- 节点将由JS动态插入 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 状态讲解 -->
+                <div id="animStatus" class="p-4 rounded-lg shadow-sm text-lg font-medium text-gray-800">
+                    点击“开始/重置”按钮以初始化动画。
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        // --- 辅助类 ---
+        
+        /**
+         * 节点类
+         */
+        class AnimNode {
+            constructor(data, id) {
+                this.data = data;
+                this.next = null;
+                this.id = id; // 用于DOM操作的唯一ID
+                this.element = this.createElement(data, id);
+            }
+            
+            createElement(data, id) {
+                const nodeEl = document.createElement('div');
+                nodeEl.id = `node-${id}`;
+                nodeEl.className = 'node border-gray-400 bg-white relative node-move';
+                nodeEl.innerHTML = `
+                    <div class="node-data border-gray-400">${data}</div>
+                    <div class="node-next"></div>
+                `;
+                return nodeEl;
+            }
+        }
+        
+        /**
+         * 链表类 (用于动画)
+         */
+        class AnimLinkedList {
+            constructor() {
+                this.head = new AnimNode(null, 'head');
+                this.head.element.classList.add('border-indigo-400', 'bg-indigo-100');
+                this.head.element.firstChild.innerHTML = 'H';
+                this.tail = this.head; // 尾指针，用于尾插法
+                this.length = 0;
+            }
+
+            // 从数组创建 (非递增)
+            buildFromArray(arr, prefix) {
+                let current = this.head;
+                for (let i = 0; i < arr.length; i++) {
+                    const node = new AnimNode(arr[i], `${prefix}-${i}`);
+                    current.next = node;
+                    current = node;
+                    this.length++;
+                }
+                this.tail = current;
+                return this.head.next; // 返回第一个数据节点
+            }
+
+            // 在DOM中渲染链表
+            render(containerId) {
+                const container = document.getElementById(containerId);
+                container.innerHTML = ''; // 清空
+                let current = this.head.next;
+                while (current) {
+                    container.appendChild(current.element);
+                    if (current.next) {
+                        const arrowEl = document.createElement('div');
+                        arrowEl.className = 'arrow';
+                        container.appendChild(arrowEl);
+                    }
+                    current = current.next;
+                }
+                if (!this.head.next) {
+                    container.innerHTML = '<span class="text-gray-500">空链表</span>';
+                }
+            }
+        }
+
+        // --- 选项卡逻辑 ---
+        function showTab(tabId) {
+            // 隐藏所有内容
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            // 移除所有按钮的 active 状态
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 显示目标内容
+            document.getElementById(tabId + 'Tab').classList.add('active');
+            // 高亮目标按钮
+            document.querySelector(`.tab-btn[onclick="showTab('${tabId}')"]`).classList.add('active');
+        }
+
+        // 修正: 将 showTab 显式附加到 window 对象，以解决 onclick 作用域问题
+        window.showTab = showTab;
+        
+        // --- 模拟器逻辑 (公用函数) ---
+        
+        /**
+         * 解析逗号分隔的字符串为数字数组
+         */
+        function parseInput(inputStr) {
+            if (inputStr.trim() === '') {
+                return [];
+            }
+            // 修正: inputGestr -> inputStr
+            return inputStr.split(',')
+                .map(item => {
+                    const num = parseFloat(item.trim());
+                    if (isNaN(num)) {
+                        throw new Error(`输入无效: "${item.trim()}" 不是一个数字。`);
+                    }
+                    return num;
+                });
+        }
+
+        /**
+         * 检查数组是否为非递增
+         */
+        function isNonIncreasing(arr) {
+            for (let i = 0; i < arr.length - 1; i++) {
+                if (arr[i] < arr[i+1]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /**
+         * 合并逻辑 (双指针 + 尾插法)
+         * 接收两个数组，返回一个合并后的数组
+         */
+        function mergeLists(arrA, arrB) {
+            const lc = [];
+            let p = 0; // 指向 arrA
+            let q = 0; // 指向 arrB
+
+            while (p < arrA.length && q < arrB.length) {
+                if (arrA[p] >= arrB[q]) {
+                    lc.push(arrA[p]);
+                    p++;
+                } else {
+                    lc.push(arrB[q]);
+                    q++;
+                }
+            }
+
+            // 处理剩余节点
+            while (p < arrA.length) {
+                lc.push(arrA[p]);
+                p++;
+            }
+            while (q < arrB.length) {
+                lc.push(arrB[q]);
+                q++;
+            }
+            
+            return lc;
+        }
+
+        // --- 模拟器 Tab 特定逻辑 ---
+        const mergeButton = document.getElementById('mergeButton');
+        const listAInput = document.getElementById('listA_input');
+        const listBInput = document.getElementById('listB_input');
+        const mergeResult = document.getElementById('mergeResult');
+        const simError = document.getElementById('simError');
+
+        mergeButton.addEventListener('click', () => {
+            simError.textContent = '';
+            try {
+                // 1. 解析输入
+                const listA = parseInput(listAInput.value);
+                const listB = parseInput(listBInput.value);
+
+                // 2. 验证是否非递增
+                if (!isNonIncreasing(listA) || !isNonIncreasing(listB)) {
+                    throw new Error('输入错误：链表必须是非递增顺序 (例如 9, 5, 1)。');
+                }
+
+                // 3. 执行合并逻辑
+                const mergedList = mergeLists(listA, listB);
+
+                // 4. 显示结果
+                if (mergedList.length === 0) {
+                    mergeResult.innerHTML = '<span class="text-gray-500">空链表</span>';
+                } else {
+                    mergeResult.textContent = mergedList.join(' → ');
+                }
+
+            } catch (error) {
+                simError.textContent = error.message;
+                mergeResult.innerHTML = '<span class="text-gray-500">等待输入...</span>';
+            }
+        });
+
+
+        // --- 动画逻辑 ---
+        
+        const startAnimButton = document.getElementById('startAnimButton');
+        const nextStepButton = document.getElementById('nextStepButton');
+        const animListLC = document.getElementById('animListLC');
+        const animListA = document.getElementById('animListA');
+        const animListB = document.getElementById('animListB');
+        const animStatus = document.getElementById('animStatus');
+
+        // 修正: 重命名变量以避免 'pa', 'qb' 等的全局命名冲突
+        let animLa, animLb, animLc;
+        let animPa, animQb; // 动画中的节点指针
+        let animPaPtr, animQbPtr; // 动画中的DOM指针元素
+        let rPtr; // lc 的尾指针
+        let animationState = null; // 动画生成器
+
+        startAnimButton.addEventListener('click', initAnimation);
+        nextStepButton.addEventListener('click', () => {
+            if (animationState) {
+                animationState.next();
+            }
+        });
+
+        /**
+         * 初始化动画
+         */
+        function initAnimation() {
+            // 1. 清理 DOM
+            animListLC.innerHTML = '';
+            animListA.innerHTML = '';
+            animListB.innerHTML = '';
+            if (animPaPtr) animPaPtr.remove();
+            if (animQbPtr) animQbPtr.remove();
+            
+            let listA, listB;
+            let useDefaults = false;
+
+            // 2. 尝试从模拟器获取数据
+            try {
+                listA = parseInput(listAInput.value);
+                listB = parseInput(listBInput.value);
+
+                if (!isNonIncreasing(listA) || !isNonIncreasing(listB)) {
+                    if (listAInput.value.trim() !== '' || listBInput.value.trim() !== '') {
+                         // 只在用户输入了无效数据时显示错误
+                        setStatus('模拟器中的输入不是有效的非递增列表。将使用默认值 (9, 5, 1 和 8, 6, 2)。');
+                    } else {
+                        // 输入为空，静默使用默认值
+                        setStatus('点击“下一步”开始。');
+                    }
+                    useDefaults = true;
+                } else if (listA.length === 0 && listB.length === 0) {
+                     // 合法，但是空的
+                     setStatus('模拟器中的列表为空。将使用默认值 (9, 5, 1 和 8, 6, 2)。');
+                     useDefaults = true;
+                } else {
+                     // 使用用户的合法数据
+                     setStatus('已加载模拟器数据。点击“下一步”开始。');
+                }
+
+            } catch (e) {
+                setStatus('解析模拟器数据失败。将使用默认值 (9, 5, 1 和 8, 6, 2)。');
+                useDefaults = true;
+            }
+
+            if (useDefaults) {
+                listA = [9, 5, 1];
+                listB = [8, 6, 2];
+            }
+            
+            // 3. 创建链表实例
+            animLa = new AnimLinkedList();
+            animLb = new AnimLinkedList();
+            animLc = new AnimLinkedList(); // 新链表
+
+            animPa = animLa.buildFromArray(listA, 'a'); // pa 指向 la 的第一个数据节点
+            animQb = animLb.buildFromArray(listB, 'b'); // qb 指向 lb 的第一个数据节点
+            rPtr = animLc.head; // rPtr 指向 lc 的头结点
+
+            // 4. 渲染链表
+            animLa.render('animListA');
+            animLb.render('animListB');
+            
+            // 渲染 lc (只有头结点)
+            animListLC.appendChild(animLc.head.element);
+            
+            // 5. 创建指针
+            animPaPtr = createPointerElement('animPaPtr', 'border-blue-500');
+            animQbPtr = createPointerElement('animQbPtr', 'border-green-500');
+            
+            if (animPa) {
+                animListA.appendChild(animPaPtr);
+                movePointer(animPaPtr, animPa.element);
+            }
+            if (animQb) {
+                animListB.appendChild(animQbPtr);
+                movePointer(animQbPtr, animQb.element);
+            }
+            
+            // 6. 启动动画状态机
+            animationState = animationGenerator();
+            nextStepButton.disabled = false;
+            animationState.next(); // 执行第一步
+        }
+        
+        function createPointerElement(id, colorClass) {
+            const ptr = document.createElement('div');
+            ptr.id = id;
+            ptr.className = `pointer ${colorClass}`;
+            // 修正: 检查 id 是否包含 'animPa' 来决定标签
+            ptr.innerHTML = `<span class="absolute -top-6 text-sm font-bold ${colorClass.replace('border', 'text')}">${id.includes('animPa') ? 'pa' : 'qb'}</span>`;
+            return ptr;
+        }
+
+        function movePointer(ptrEl, targetNodeEl) {
+            if (!targetNodeEl || !ptrEl) return;
+            
+            const newLeft = targetNodeEl.offsetLeft + (targetNodeEl.offsetWidth / 2) - (ptrEl.offsetWidth / 2);
+            ptrEl.style.transform = `translateX(${newLeft}px)`;
+        }
+
+        /**
+         * 动画状态机 (Generator)
+         */
+        function* animationGenerator() {
+            // 检查空链表
+            if (!animPa && !animQb) {
+                setStatus('两个链表都为空。合并完成。');
+                nextStepButton.disabled = true;
+                yield;
+                return;
+            }
+            
+            setStatus('初始化完成。<code>pa</code> 指向 <code>la</code> 头，<code>qb</code> 指向 <code>lb</code> 头。<code>r</code> (尾指针) 指向 <code>lc</code> 的头结点。');
+            yield;
+
+            // 步骤2: 双指针合并
+            while (animPa && animQb) {
+                highlightNode(animPa, 'blue');
+                highlightNode(animQb, 'green');
+                setStatus(`比较 <code>pa.data</code> (${animPa.data}) 和 <code>qb.data</code> (${animQb.data})。`);
+                yield;
+
+                if (animPa.data >= animQb.data) {
+                    setStatus(`<code>${animPa.data} >= ${animQb.data}</code>。将 <code>pa</code> 节点 ( ${animPa.data} ) 移动到 <code>lc</code> 的末尾。`);
+                    yield;
+                    
+                    const nodeToMove = animPa;
+                    animPa = animPa.next; // pa 指针后移
+                    
+                    // 动画: 移动节点
+                    moveNodeToLC(nodeToMove, rPtr);
+                    rPtr = nodeToMove; // r 指针指向新的尾节点
+                    
+                    // 动画: 移动 pa 指针
+                    if (animPa) {
+                        movePointer(animPaPtr, animPa.element);
+                    } else {
+                        animPaPtr.style.opacity = '0'; // pa 走完了
+                    }
+                    unhighlightNode(nodeToMove);
+                    unhighlightNode(animQb);
+
+                } else {
+                    setStatus(`<code>${animPa.data} < ${animQb.data}</code>。将 <code>qb</code> 节点 ( ${animQb.data} ) 移动到 <code>lc</code> 的末尾。`);
+                    yield;
+
+                    const nodeToMove = animQb;
+                    animQb = animQb.next; // qb 指针后移
+
+                    // 动画: 移动节点
+                    moveNodeToLC(nodeToMove, rPtr);
+                    rPtr = nodeToMove; // r 指针指向新的尾节点
+
+                    // 动画: 移动 qb 指针
+                    if (animQb) {
+                        movePointer(animQbPtr, animQb.element);
+                    } else {
+                        animQbPtr.style.opacity = '0'; // qb 走完了
+                    }
+                    unhighlightNode(nodeToMove);
+                    unhighlightNode(animPa);
+                }
+                yield;
+            }
+
+            // 步骤3: 处理剩余节点
+            setStatus('一个链表已遍历完毕。检查剩余节点。');
+            
+            // 修正: 比较阶段结束，立即移除两个指针的DOM，防止乱图
+            if (animPaPtr) animPaPtr.remove();
+            if (animQbPtr) animQbPtr.remove();
+
+            yield;
+            
+            if (animPa) {
+                setStatus('<code>lb</code> 已空。将 <code>la</code> (从 <code>pa</code> 开始) 的所有剩余节点接入 <code>lc</code>。');
+                // if (animPaPtr) animPaPtr.remove(); // 移除
+                animListA.innerHTML = '<span class="text-gray-500 text-lg p-4">已合并</span>'; // 清空源列表
+                yield;
+                rPtr.next = animPa; // 逻辑上链接
+                moveRemainingNodesDOM(animPa, rPtr, animListLC); // 移动DOM
+            } else if (animQb) {
+                setStatus('<code>la</code> 已空。将 <code>lb</code> (从 <code>qb</code> 开始) 的所有剩余节点接入 <code>lc</code>。');
+                // if (animQbPtr) animQbPtr.remove(); // 移除
+                animListB.innerHTML = '<span class="text-gray-500 text-lg p-4">已合并</span>'; // 清空源列表
+                yield;
+                rPtr.next = animQb; // 逻辑上链接
+                moveRemainingNodesDOM(animQb, rPtr, animListLC); // 移动DOM
+            } else {
+                // 两个都为空，不需要额外操作
+                yield;
+            }
+
+            // 确保指针被移除 (修正: 此处已冗余，在上面处理)
+            // if (animPaPtr && animPaPtr.parentElement) animPaPtr.parentElement.removeChild(animPaPtr);
+            // if (animQbPtr && animQbPtr.parentElement) animQbPtr.parentElement.removeChild(animQbPtr);
+
+            setStatus('合并完成！新链表 <code>lc</code> 已生成。');
+            nextStepButton.disabled = true;
+        }
+        
+        function setStatus(html) {
+            animStatus.innerHTML = html;
+        }
+
+        function highlightNode(node, color) {
+            if (!node) return;
+            node.element.classList.add(`border-${color}-500`, 'border-4', 'scale-110');
+        }
+
+        function unhighlightNode(node) {
+             if (!node) return;
+            node.element.classList.remove('border-blue-500', 'border-green-500', 'border-4', 'scale-110');
+        }
+
+        /**
+         * 动画核心：移动单个节点到LC，并清理原列表的箭头
+         */
+        function moveNodeToLC(node, r) {
+            // 修复: 移除原列表中的后续箭头
+            const parentList = node.element.parentElement;
+            if (parentList) {
+                const nextEl = node.element.nextElementSibling;
+                if (nextEl && nextEl.classList.contains('arrow')) {
+                    nextEl.remove();
+                }
+            }
+
+            // 1. 在DOM中添加箭头
+            const arrowEl = document.createElement('div');
+            arrowEl.className = 'arrow opacity-0';
+            animListLC.appendChild(arrowEl);
+            
+            // 2. 移动节点
+            animListLC.appendChild(node.element);
+            
+            // 3. 逻辑链接
+            r.next = node;
+            node.next = null; // 确保它是尾节点
+            
+            // 4. 渐显箭头
+            setTimeout(() => {
+                arrowEl.style.transition = 'opacity 0.5s';
+                arrowEl.style.opacity = '1';
+            }, 100); // 稍作延迟
+        }
+        
+        /**
+         * 动画：将剩余的所有节点DOM移动到LC
+         */
+        function moveRemainingNodesDOM(startNode, r, lcContainer) {
+            let current = startNode;
+            while(current) {
+                const arrowEl = document.createElement('div');
+                arrowEl.className = 'arrow';
+                lcContainer.appendChild(arrowEl);
+                lcContainer.appendChild(current.element); // 这会从原父元素移动节点
+                current = current.next;
+            }
+        }
+        
+        // 默认显示第一个选项卡
+        document.addEventListener('DOMContentLoaded', () => {
+            showTab('content');
+        });
+
+    </script>
+
+</body>
+</html>
+
